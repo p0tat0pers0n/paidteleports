@@ -21,7 +21,7 @@ import java.util.*;
 
 public final class PaidTeleports extends JavaPlugin implements Listener {
     String[] teleportCommands = {"warp", "ewarp", "warps", "ewarps", "essentials:warp", "essentials:ewarp", "essentials:warps", "essentials:ewarps", "tpa", "tp2p", "tpask", "tpahere", "etpa", "etp2p", "etpask", "etpahere", "essentials:tpa", "essentials:tp2p", "essentials:tpask", "essentials:tpahere", "essentials:etpa", "essentials:etp2p", "essentials:etpask", "essentials:etpahere", "home", "homes", "ehome", "ehomes", "essentials:home", "essentials:homes", "essentials:ehome", "essentials:ehomes"};
-    String[] tpaTeleport = {"tpa", "tp2p", "tpask", "tpahere", "etpa", "etp2p", "etpask", "etpahere", "essentials:tpa", "essentials:tp2p", "essentials:tpask", "essentials:tpahere", "essentials:etpa", "essentials:etp2p", "essentials:etpask", "essentials:etpahere"};
+    String[] tpaTeleport = {"tpa", "tp2p", "tpask", "etpa", "etp2p", "etpask", "essentials:tpa", "essentials:tp2p", "essentials:tpask", "essentials:etpa", "essentials:etp2p", "essentials:etpask"};
     String[] tpaHereTeleport = {"tpahere", "essentials:tpahere", "etpahere", "essentials:etpahere"};
 
     HashMap<UUID, UUID> tpaHereList = new HashMap<>();
@@ -121,6 +121,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
     }
 
     boolean paymentChecker(Player player, String command, String playerToTpaHere) {
+        player.sendMessage("Runs through payment checker");
         for (ItemStack item : player.getInventory()) {
             if (item != null && item.getItemMeta().hasCustomName() && item.getItemMeta().getDisplayName().equals(teleportItem)) {
                 for (String commands : tpaHereTeleport) {
@@ -133,20 +134,23 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                             teleportingPlayers.replace(playerToTpaHereUUID, 124);
                             tpaHereList.replace(playerToTpaHereUUID, player.getUniqueId());
                         }
+                        return false;
                     }
                 }
+                player.sendMessage("runs past tpahereteleport check");
                 tpaHereList.remove(player.getUniqueId());
                 for (String commands : tpaTeleport) {
                     if (command.equals(commands)) {
+                        player.sendMessage("knows its a tpateleport");
                         tpaHereList.remove(player.getUniqueId());
                         if (!teleportingPlayers.containsKey(player.getUniqueId())) {
                             teleportingPlayers.put(player.getUniqueId(), 124);
                         }else {
                             teleportingPlayers.replace(player.getUniqueId(), 124);
                         }
+                        return false;
                     }
                 }
-                tpaHereList.remove(player.getUniqueId());
                 if (!teleportingPlayers.containsKey(player.getUniqueId())) {
                     teleportingPlayers.put(player.getUniqueId(), 4);
                 }else {
@@ -165,6 +169,10 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
         String[] commandSplit = rawCommand.split("[/\\s]");
         String command = commandSplit[1];
         List<String> freeWarps = this.getConfig().getStringList("free-warps");
+
+        if (command.equals("tp")) {
+            return;
+        }
 
         for (String teleportCommand : teleportCommands) {
             if (command.equals(teleportCommand) && player.hasPermission("essentials.home")) {
