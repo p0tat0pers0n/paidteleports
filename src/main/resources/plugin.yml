@@ -1,0 +1,4 @@
+name: PaidTeleports
+version: '1.0-SNAPSHOT'
+main: SPUD.Industries.paidteleports.PaidTeleports
+api-version: '1.21'
