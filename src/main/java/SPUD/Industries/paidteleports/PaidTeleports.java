@@ -29,9 +29,13 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
 
     String teleportItem = this.getConfig().getString("payment-item");
 
+    String paidItemMessage = this.getConfig().getString("paid-message");
+    String droppedItemMessage = this.getConfig().getString("dropped-item-message");
+    String noPaymentItemMessage = this.getConfig().getString("no-payment-item-message");
     @Override
     public boolean onCommand(@NotNull CommandSender sender, Command cmd, @NotNull String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("paidteleports") && args.length > 0) {
+            this.getConfig().options().copyDefaults(true);
             if (args[0].equals("help")) {
                 // Display help information
                 sender.sendMessage("/paidteleports freewarps toggle\n§cToggles if all warps are free.§f\n/paidteleports freewarps add/remove WarpName\n§cAdds or removes a warp from the free-warp list.");
@@ -168,7 +172,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
         List<String> freeWarps = this.getConfig().getStringList("free-warps");
 
         for (String teleportCommand : teleportCommands) {
-            if (command.equals(teleportCommand) && player.hasPermission("essentials.home")) {
+            if (command.equals(teleportCommand)) {
                 // Player issued actual teleport command and has perms to teleport
                 if (command.equals("tp")) {
                     teleportingPlayers.remove(Objects.requireNonNull(Bukkit.getPlayer(commandSplit[3])).getUniqueId());
@@ -187,7 +191,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                     commandSplit = rawCommand.split("[/\\s]");
                 }
                 if (paymentChecker(player, commandSplit[1], commandSplit[2])) {
-                    player.sendMessage("You need a " + teleportItem + "§f to teleport.");
+                    player.sendMessage(noPaymentItemMessage);
                     teleportingPlayers.remove(player.getUniqueId());
                     event.setCancelled(true);
                 }
@@ -206,7 +210,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
             if (tpaHereList.containsKey(player.getUniqueId())) {
                 for (ItemStack item : Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).getInventory()) {
                     if (item != null && item.getItemMeta().hasCustomName() && item.getItemMeta().getDisplayName().equals(teleportItem)) {
-                        Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).sendMessage("You have used a " + teleportItem + "§f.");
+                        Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).sendMessage(paidItemMessage);
                         item.setAmount(item.getAmount() - 1);
                         Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).updateInventory();
                         teleportingPlayers.remove(player.getUniqueId());
@@ -219,13 +223,13 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                     event.setCancelled(true);
                     teleportingPlayers.remove(player.getUniqueId());
                     tpaHereList.remove(player.getUniqueId());
-                    Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).sendMessage("Where is your " + teleportItem + "§f?");
+                    Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).sendMessage(droppedItemMessage);
                 }
             }else {
                 // Player issued the command themselves
                 for (ItemStack item : player.getInventory()) {
                     if (item != null && item.getItemMeta().hasCustomName() && item.getItemMeta().getDisplayName().equals(teleportItem)) {
-                        player.sendMessage("You have used a " + teleportItem + "§f.");
+                        player.sendMessage(paidItemMessage);
                         item.setAmount(item.getAmount() - 1);
                         player.updateInventory();
                         teleportingPlayers.remove(player.getUniqueId());
@@ -236,7 +240,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                     // Cancel teleport because they dropped the crystal
                     event.setCancelled(true);
                     teleportingPlayers.remove(player.getUniqueId());
-                    player.sendMessage("Where is your " + teleportItem + "§f?");
+                    player.sendMessage(droppedItemMessage);
                 }
             }
         }

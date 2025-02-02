@@ -1,5 +1,9 @@
 payment-item: §dTeleport Crystal
+paid-message: §a§lMinevane §7You have used a §dTeleport Crystal§7.
+dropped-item-message: §a§lMinevane §7Pick up your §dTeleport Crystal§7.
+no-payment-item-message: §a§lMinevane §7You need a §dTeleport Crystal§7 to teleport.
 
 all-warps-free: false
 free-warps:
 - admin
+- newplayerarea
