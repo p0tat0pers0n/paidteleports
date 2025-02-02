@@ -1,6 +1,8 @@
 package SPUD.Industries.paidteleports;
 
 import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
@@ -11,7 +13,10 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.jetbrains.annotations.NotNull;
 
+import java.lang.StringBuilder;
+import java.lang.String;
 import java.util.*;
 
 public final class PaidTeleports extends JavaPlugin implements Listener {
@@ -19,10 +24,101 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
     String[] tpaTeleport = {"tpa", "tp2p", "tpask", "tpahere", "etpa", "etp2p", "etpask", "etpahere", "essentials:tpa", "essentials:tp2p", "essentials:tpask", "essentials:tpahere", "essentials:etpa", "essentials:etp2p", "essentials:etpask", "essentials:etpahere"};
     String[] tpaHereTeleport = {"tpahere", "essentials:tpahere", "etpahere", "essentials:etpahere"};
 
-    HashMap<UUID, UUID> tpaHereList = new HashMap<UUID, UUID>();
-    HashMap<UUID, Integer> teleportingPlayers = new HashMap<UUID, Integer>();
+    HashMap<UUID, UUID> tpaHereList = new HashMap<>();
+    HashMap<UUID, Integer> teleportingPlayers = new HashMap<>();
 
     String teleportItem = this.getConfig().getString("payment-item");
+
+    @Override
+    public boolean onCommand(@NotNull CommandSender sender, Command cmd, @NotNull String label, String[] args) {
+        if (cmd.getName().equalsIgnoreCase("paidteleports") && args.length > 0) {
+            if (args[0].equals("help")) {
+                // Display help information
+                sender.sendMessage("/paidteleports freewarps toggle\n§cToggles if all warps are free.§f\n/paidteleports freewarps add/remove WarpName\n§cAdds or removes a warp from the free-warp list.");
+            }
+            if (args[0].equals("reload")) {
+                // Reloads the config file
+                this.reloadConfig();
+                sender.sendMessage("§cReloaded!");
+                return true;
+            }
+            if (args[0].equals("freewarps")) {
+                List<String> freeWarps = this.getConfig().getStringList("free-warps");
+                if (args.length > 1) {
+                    switch (args[1]) {
+                        case "toggle":
+                            // Toggle the all-warps-free config
+                            if (this.getConfig().getBoolean("all-warps-free")) {
+                                // All warps free is on so we turn it off
+                                this.getConfig().set("all-warps-free", false);
+                                this.saveConfig();
+                                sender.sendMessage("all-warps-free is now false");
+                            } else {
+                                // All warps free is off so we turn it on
+                                this.getConfig().set("all-warps-free", true);
+                                this.saveConfig();
+                                sender.sendMessage("all-warps-free is now true");
+                            }
+                            return true;
+                        case "add":
+                            // Add a warp by args[2] name
+                            if (args.length > 2) {
+                                if (!freeWarps.contains(args[2])) {
+                                    freeWarps.add(args[2]);
+                                    this.getConfig().set("free-warps", freeWarps);
+                                    this.saveConfig();
+                                    sender.sendMessage(args[2] + "§c has been added");
+                                }else {
+                                    sender.sendMessage(args[2] + "§c is already on the list");
+                                }
+                            } else {
+                                sender.sendMessage("§cMissing warp name argument /paidteleports freewarps add [Warp Name] <-- This");
+                            }
+                            return true;
+                        case "remove":
+                            // Remove a warp by the args[2] name
+                            if (args.length > 2) {
+                                if (freeWarps.remove(args[2])) {
+                                    // Free warps list contains user provided response and is removed
+                                    sender.sendMessage(args[2] + "§c has been removed.");
+                                    this.getConfig().set("free-warps", freeWarps);
+                                    this.saveConfig();
+                                } else {
+                                    sender.sendMessage("§cNo warp by that name");
+                                }
+                            } else {
+                                sender.sendMessage("§cMissing warp name argument /paidteleports freewarps remove [Warp Name] <-- This");
+                            }
+                            return true;
+                    }
+                }else {
+                    // No args [1] therefore list the warps that are free
+                    sender.sendMessage("§cAll warps free:§f " + this.getConfig().getBoolean("all-warps-free"));
+                    StringBuilder freeWarpsList = new StringBuilder();
+                    freeWarpsList.append("Free Warps: ");
+                    if (!this.getConfig().getStringList("free-warps").isEmpty()) {
+                        for (String warps : this.getConfig().getStringList("free-warps")) {
+                            freeWarpsList.append(warps);
+                            if (!warps.equals(this.getConfig().getStringList("free-warps").getLast())) {
+                                freeWarpsList.append(", ");
+                            } else {
+                                freeWarpsList.append(".");
+                                break;
+                            }
+                        }
+                        sender.sendMessage(freeWarpsList.toString());
+                    }else {
+                        sender.sendMessage("§cNo free warps");
+                    }
+                    return true;
+                }
+            }
+        }else if (args.length == 0) {
+            sender.sendMessage("§cPossible Arguments:§f help, reload, freewarps [toggle, add, remove]");
+            return true;
+        }
+        return true;
+    }
 
     boolean paymentChecker(Player player, String command, String playerToTpaHere) {
         for (ItemStack item : player.getInventory()) {
@@ -68,10 +164,6 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
         String command = commandSplit[1];
         List<String> freeWarps = this.getConfig().getStringList("free-warps");
 
-        for (String item : freeWarps) {
-            player.sendMessage(item);
-        }
-
         for (String teleportCommand : teleportCommands) {
             if (command.equals(teleportCommand) && player.hasPermission("essentials.home")) {
                 // Player issued actual teleport command and has perms to teleport
@@ -84,7 +176,6 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                     break;
                 }
                 if (commandSplit.length < 3) {
-                    player.sendMessage(String.valueOf(commandSplit.length));
                     rawCommand = rawCommand + " NA";
                     commandSplit = rawCommand.split("[/\\s]");
                 }
@@ -109,7 +200,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
             if (tpaHereList.containsKey(player.getUniqueId())) {
                 for (ItemStack item : Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).getInventory()) {
                     if (item != null && item.getItemMeta().hasCustomName() && item.getItemMeta().getDisplayName().equals(teleportItem)) {
-                        Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).sendMessage("You have used a " + teleportItem);
+                        Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).sendMessage("You have used a " + teleportItem + "§f.");
                         item.setAmount(item.getAmount() - 1);
                         Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).updateInventory();
                         teleportingPlayers.remove(player.getUniqueId());
@@ -122,14 +213,13 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                     event.setCancelled(true);
                     teleportingPlayers.remove(player.getUniqueId());
                     tpaHereList.remove(player.getUniqueId());
-                    Bukkit.getPlayer(tpaHereList.get(player.getUniqueId())).sendMessage("Where is your " + teleportItem + "§f?");
+                    Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).sendMessage("Where is your " + teleportItem + "§f?");
                 }
             }else {
                 // Player issued the command themselves
-                player.sendMessage("Command issued by themselves");
                 for (ItemStack item : player.getInventory()) {
                     if (item != null && item.getItemMeta().hasCustomName() && item.getItemMeta().getDisplayName().equals(teleportItem)) {
-                        player.sendMessage("You have used a " + teleportItem + ".");
+                        player.sendMessage("You have used a " + teleportItem + "§f.");
                         item.setAmount(item.getAmount() - 1);
                         player.updateInventory();
                         teleportingPlayers.remove(player.getUniqueId());
@@ -178,6 +268,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerLeave(PlayerQuitEvent event) {
         teleportingPlayers.remove(event.getPlayer().getUniqueId());
+        tpaHereList.remove(event.getPlayer().getUniqueId());
     }
 
     @Override
