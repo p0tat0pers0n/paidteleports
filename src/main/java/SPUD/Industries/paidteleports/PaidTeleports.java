@@ -170,10 +170,6 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
         String command = commandSplit[1];
         List<String> freeWarps = this.getConfig().getStringList("free-warps");
 
-        if (command.equals("tp")) {
-            return;
-        }
-
         for (String teleportCommand : teleportCommands) {
             if (command.equals(teleportCommand) && player.hasPermission("essentials.home")) {
                 // Player issued actual teleport command and has perms to teleport
