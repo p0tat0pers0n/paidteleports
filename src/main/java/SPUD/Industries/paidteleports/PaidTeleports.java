@@ -138,6 +138,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                 tpaHereList.remove(player.getUniqueId());
                 for (String commands : tpaTeleport) {
                     if (command.equals(commands)) {
+                        tpaHereList.remove(player.getUniqueId());
                         if (!teleportingPlayers.containsKey(player.getUniqueId())) {
                             teleportingPlayers.put(player.getUniqueId(), 124);
                         }else {
@@ -145,6 +146,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                         }
                     }
                 }
+                tpaHereList.remove(player.getUniqueId());
                 if (!teleportingPlayers.containsKey(player.getUniqueId())) {
                     teleportingPlayers.put(player.getUniqueId(), 4);
                 }else {
@@ -193,11 +195,14 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
     public void playerTeleport(PlayerTeleportEvent event) {
         Player player = event.getPlayer();
         PlayerTeleportEvent.TeleportCause cause = event.getCause();
-        // Removes player from teleporting list if they teleport within 3 seconds
-        // Otherwise, wait for the refund
+        // Removes player from teleporting list if they teleport within the time
+        if (teleportingPlayers.containsKey(player.getUniqueId())) {
+            player.sendMessage("Is on teleporting players list");
+        }
         if (String.valueOf(cause).equals("COMMAND") && teleportingPlayers.containsKey(player.getUniqueId())) {
             // If player that is being tp'd was tpahere'd charge the player that did /tpahere
             if (tpaHereList.containsKey(player.getUniqueId())) {
+                player.sendMessage("player is on tpahere list");
                 for (ItemStack item : Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).getInventory()) {
                     if (item != null && item.getItemMeta().hasCustomName() && item.getItemMeta().getDisplayName().equals(teleportItem)) {
                         Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).sendMessage("You have used a " + teleportItem + "§f.");
@@ -218,6 +223,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
             }else {
                 // Player issued the command themselves
                 for (ItemStack item : player.getInventory()) {
+                    player.sendMessage("tpa & home & warp ran");
                     if (item != null && item.getItemMeta().hasCustomName() && item.getItemMeta().getDisplayName().equals(teleportItem)) {
                         player.sendMessage("You have used a " + teleportItem + "§f.");
                         item.setAmount(item.getAmount() - 1);
