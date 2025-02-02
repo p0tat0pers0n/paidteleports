@@ -20,7 +20,7 @@ import java.lang.String;
 import java.util.*;
 
 public final class PaidTeleports extends JavaPlugin implements Listener {
-    String[] teleportCommands = {"warp", "ewarp", "warps", "ewarps", "essentials:warp", "essentials:ewarp", "essentials:warps", "essentials:ewarps", "tpa", "tp2p", "tpask", "tpahere", "etpa", "etp2p", "etpask", "etpahere", "essentials:tpa", "essentials:tp2p", "essentials:tpask", "essentials:tpahere", "essentials:etpa", "essentials:etp2p", "essentials:etpask", "essentials:etpahere", "home", "homes", "ehome", "ehomes", "essentials:home", "essentials:homes", "essentials:ehome", "essentials:ehomes"};
+    String[] teleportCommands = {"tp", "warp", "ewarp", "warps", "ewarps", "essentials:warp", "essentials:ewarp", "essentials:warps", "essentials:ewarps", "tpa", "tp2p", "tpask", "tpahere", "etpa", "etp2p", "etpask", "etpahere", "essentials:tpa", "essentials:tp2p", "essentials:tpask", "essentials:tpahere", "essentials:etpa", "essentials:etp2p", "essentials:etpask", "essentials:etpahere", "home", "homes", "ehome", "ehomes", "essentials:home", "essentials:homes", "essentials:ehome", "essentials:ehomes"};
     String[] tpaTeleport = {"tpa", "tp2p", "tpask", "etpa", "etp2p", "etpask", "essentials:tpa", "essentials:tp2p", "essentials:tpask", "essentials:etpa", "essentials:etp2p", "essentials:etpask"};
     String[] tpaHereTeleport = {"tpahere", "essentials:tpahere", "etpahere", "essentials:etpahere"};
 
@@ -173,6 +173,10 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
         for (String teleportCommand : teleportCommands) {
             if (command.equals(teleportCommand) && player.hasPermission("essentials.home")) {
                 // Player issued actual teleport command and has perms to teleport
+                if (command.equals("tp")) {
+                    teleportingPlayers.remove(Objects.requireNonNull(Bukkit.getPlayer(commandSplit[3])).getUniqueId());
+                    break;
+                }
                 if (command.equals("warp") && freeWarps.contains(commandSplit[2])) {
                     // If the player warps to one of the free warps in the config then make it free by breaking
                     break;
