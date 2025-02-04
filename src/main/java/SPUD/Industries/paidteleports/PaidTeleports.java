@@ -1,5 +1,6 @@
 package SPUD.Industries.paidteleports;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -23,8 +24,10 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
     String[] teleportCommands = {"tp", "warp", "ewarp", "warps", "ewarps", "essentials:warp", "essentials:ewarp", "essentials:warps", "essentials:ewarps", "tpa", "tp2p", "tpask", "tpahere", "etpa", "etp2p", "etpask", "etpahere", "essentials:tpa", "essentials:tp2p", "essentials:tpask", "essentials:tpahere", "essentials:etpa", "essentials:etp2p", "essentials:etpask", "essentials:etpahere", "home", "homes", "ehome", "ehomes", "essentials:home", "essentials:homes", "essentials:ehome", "essentials:ehomes"};
     String[] tpaTeleport = {"tpa", "tp2p", "tpask", "etpa", "etp2p", "etpask", "essentials:tpa", "essentials:tp2p", "essentials:tpask", "essentials:etpa", "essentials:etp2p", "essentials:etpask"};
     String[] tpaHereTeleport = {"tpahere", "essentials:tpahere", "etpahere", "essentials:etpahere"};
+    String[] tpacceptCommands = {"tpaccept", "etpaccept", "essentials:tpaccept", "essentials:etpaccept"};
 
     HashMap<UUID, UUID> tpaHereList = new HashMap<>();
+    HashMap<UUID, UUID> tpaList = new HashMap<>();
     HashMap<UUID, Integer> teleportingPlayers = new HashMap<>();
 
     String teleportItem = this.getConfig().getString("payment-item");
@@ -32,6 +35,8 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
     String paidItemMessage = this.getConfig().getString("paid-message");
     String droppedItemMessage = this.getConfig().getString("dropped-item-message");
     String noPaymentItemMessage = this.getConfig().getString("no-payment-item-message");
+    List<String> freeWarps = this.getConfig().getStringList("free-warps");
+
     @Override
     public boolean onCommand(@NotNull CommandSender sender, Command cmd, @NotNull String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("paidteleports") && args.length > 0) {
@@ -47,7 +52,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                 return true;
             }
             if (args[0].equals("freewarps")) {
-                List<String> freeWarps = this.getConfig().getStringList("free-warps");
+                freeWarps = this.getConfig().getStringList("free-warps");
                 if (args.length > 1) {
                     switch (args[1]) {
                         case "toggle":
@@ -124,17 +129,21 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
         return true;
     }
 
-    boolean paymentChecker(Player player, String command, String playerToTpaHere) {
+    boolean paymentChecker(Player player, String command, String playerInArgs) {
         for (ItemStack item : player.getInventory()) {
             if (item != null && item.getItemMeta().hasCustomName() && item.getItemMeta().getDisplayName().equals(teleportItem)) {
                 for (String commands : tpaHereTeleport) {
+                    // TpaHere processing
                     if (commands.equals(command)) {
-                        UUID playerToTpaHereUUID = Objects.requireNonNull(Bukkit.getPlayer(playerToTpaHere)).getUniqueId();
+                        UUID playerToTpaHereUUID = Objects.requireNonNull(Bukkit.getPlayer(playerInArgs)).getUniqueId();
                         if (!teleportingPlayers.containsKey(playerToTpaHereUUID)) {
                             teleportingPlayers.put(playerToTpaHereUUID, 124);
-                            tpaHereList.put(playerToTpaHereUUID, player.getUniqueId());
                         }else {
                             teleportingPlayers.replace(playerToTpaHereUUID, 124);
+                        }
+                        if (!tpaHereList.containsKey(playerToTpaHereUUID)) {
+                            tpaHereList.put(playerToTpaHereUUID, player.getUniqueId());
+                        }else {
                             tpaHereList.replace(playerToTpaHereUUID, player.getUniqueId());
                         }
                         return false;
@@ -142,16 +151,25 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                 }
                 tpaHereList.remove(player.getUniqueId());
                 for (String commands : tpaTeleport) {
+                    // Tpa command processing
                     if (command.equals(commands)) {
-                        tpaHereList.remove(player.getUniqueId());
+                        UUID playerInArgsUUID = Objects.requireNonNull(Bukkit.getPlayer(playerInArgs)).getUniqueId();
+
                         if (!teleportingPlayers.containsKey(player.getUniqueId())) {
                             teleportingPlayers.put(player.getUniqueId(), 124);
                         }else {
                             teleportingPlayers.replace(player.getUniqueId(), 124);
                         }
+                        if (!tpaList.containsKey(playerInArgsUUID)) {
+                            tpaList.put(player.getUniqueId(), playerInArgsUUID);
+                        }else {
+                            tpaList.replace(player.getUniqueId(), playerInArgsUUID);
+                        }
                         return false;
                     }
                 }
+                tpaList.remove(player.getUniqueId());
+                // Home/Warp processing
                 if (!teleportingPlayers.containsKey(player.getUniqueId())) {
                     teleportingPlayers.put(player.getUniqueId(), 4);
                 }else {
@@ -169,7 +187,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
         String rawCommand = event.getMessage();
         String[] commandSplit = rawCommand.split("[/\\s]");
         String command = commandSplit[1];
-        List<String> freeWarps = this.getConfig().getStringList("free-warps");
+        freeWarps = this.getConfig().getStringList("free-warps");
 
         for (String teleportCommand : teleportCommands) {
             if (command.equals(teleportCommand)) {
@@ -196,6 +214,21 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                     event.setCancelled(true);
                 }
                 break;
+            }
+        }
+
+        for (String tpacceptCommand : tpacceptCommands) {
+            if (tpacceptCommand.equals(command)) {
+                // If the player issued a tpaccept command then check if they are accepting a tpa or tpahere and reduce their time
+                if (teleportingPlayers.containsKey(player.getUniqueId())) {
+                    // Player is teleporting therefore, is accepting a tpahere
+                    teleportingPlayers.replace(tpaHereList.get(player.getUniqueId()), 4);
+                    Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).sendMessage("Accepted tpahere request");
+                }else {
+                    // Player is not teleporting therefore they are accepting a tpa request
+                    teleportingPlayers.replace(tpaList.get(player.getUniqueId()), 4);
+                    player.sendMessage("Accepted tpa request");
+                }
             }
         }
     }
@@ -229,6 +262,13 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                 // Player issued the command themselves
                 for (ItemStack item : player.getInventory()) {
                     if (item != null && item.getItemMeta().hasCustomName() && item.getItemMeta().getDisplayName().equals(teleportItem)) {
+//                        player.sendMessage(String.valueOf(item.getItemMeta().customName().children("content")));
+//                        String[] itemMetaList = String.valueOf(item.getItemMeta().customName().children()).split("\"");
+//                        player.sendMessage("§f§lStart:");
+//                        for (String itemString : itemMetaList) {
+//                            player.sendMessage(itemString);
+//                        }
+
                         player.sendMessage(paidItemMessage);
                         item.setAmount(item.getAmount() - 1);
                         player.updateInventory();
@@ -279,6 +319,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
     public void onPlayerLeave(PlayerQuitEvent event) {
         teleportingPlayers.remove(event.getPlayer().getUniqueId());
         tpaHereList.remove(event.getPlayer().getUniqueId());
+        tpaList.remove(event.getPlayer().getUniqueId());
     }
 
     @Override

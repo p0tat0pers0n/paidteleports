@@ -1,5 +1,5 @@
 name: paidteleports
-version: '1.0'
+version: '3.0-SNAPSHOT'
 main: SPUD.Industries.paidteleports.PaidTeleports
 api-version: '1.21'
 description: A plugin that allows players to define an item to use as payment for Essentials tpa, home, and warp commands
