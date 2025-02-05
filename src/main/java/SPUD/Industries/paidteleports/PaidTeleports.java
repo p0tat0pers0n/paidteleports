@@ -1,6 +1,5 @@
 package SPUD.Industries.paidteleports;
 
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -36,14 +35,17 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
     String droppedItemMessage = this.getConfig().getString("dropped-item-message");
     String noPaymentItemMessage = this.getConfig().getString("no-payment-item-message");
     List<String> freeWarps = this.getConfig().getStringList("free-warps");
+    List<String> commandArguments = new ArrayList<>();
+
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, Command cmd, @NotNull String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, Command cmd, @NotNull String label, String @NotNull [] args) {
+        teleportItem = this.getConfig().getString("payment-item");
         if (cmd.getName().equalsIgnoreCase("paidteleports") && args.length > 0) {
             this.getConfig().options().copyDefaults(true);
             if (args[0].equals("help")) {
                 // Display help information
-                sender.sendMessage("/paidteleports freewarps toggle\n§cToggles if all warps are free.§f\n/paidteleports freewarps add/remove WarpName\n§cAdds or removes a warp from the free-warp list.");
+                sender.sendMessage("/paidteleports freewarps toggle\n§cToggles if all warps are free.§f\n/paidteleports setitem\n§cSets the teleport item.§f\n/paidteleports freewarps add/remove WarpName\n§cAdds or removes a warp from the free-warp list.");
             }
             if (args[0].equals("reload")) {
                 // Reloads the config file
@@ -51,6 +53,20 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                 sender.sendMessage("§cReloaded!");
                 return true;
             }
+
+            if (args[0].equals("setitem")) {
+                // Sets the item that the player is holding to the teleport item
+                try {
+                    String heldItem = Objects.requireNonNull(Objects.requireNonNull(Bukkit.getPlayer(sender.getName())).getInventory().getItemInMainHand().getItemMeta().customName()).children().toString();
+                    this.getConfig().set("payment-item", heldItem);
+                    this.saveConfig();
+                    sender.sendMessage("§cItem set successfully");
+                }catch(NullPointerException e) {
+                    sender.sendMessage("§c§lError occurred when setting item. Are you sure you're holding the right item?");
+                }
+
+            }
+
             if (args[0].equals("freewarps")) {
                 freeWarps = this.getConfig().getStringList("free-warps");
                 if (args.length > 1) {
@@ -123,15 +139,30 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                 }
             }
         }else if (args.length == 0) {
-            sender.sendMessage("§cPossible Arguments:§f help, reload, freewarps [toggle, add, remove]");
+            sender.sendMessage("§cPossible Arguments:§f help, reload, setitem, freewarps [toggle, add, remove]");
             return true;
         }
         return true;
     }
 
+
+    @Override
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, String[] args) {
+        List<String> list = new ArrayList<>();
+        if (args.length == 2) {
+            if (args[0].equalsIgnoreCase("ptarg")) {
+                for (String argument : commandArguments) {
+                    if (!argument.toLowerCase().startsWith(args[1].toLowerCase())) continue;
+                    list.add(argument);
+                }
+            }
+        }
+        return list;
+    }
+
     boolean paymentChecker(Player player, String command, String playerInArgs) {
         for (ItemStack item : player.getInventory()) {
-            if (item != null && item.getItemMeta().hasCustomName() && item.getItemMeta().getDisplayName().equals(teleportItem)) {
+            if (item != null && item.getItemMeta().hasCustomName() && Objects.requireNonNull(item.getItemMeta().customName()).children().toString().equals(teleportItem)) {
                 for (String commands : tpaHereTeleport) {
                     // TpaHere processing
                     if (commands.equals(command)) {
@@ -219,9 +250,9 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
 
         for (String tpacceptCommand : tpacceptCommands) {
             if (tpacceptCommand.equals(command)) {
-                // If the player issued a tpaccept command then check if they are accepting a tpa or tpahere and reduce their time
+                // If the player issued a tp accept command then check if they are accepting a tpa or tpa here and reduce their time
                 if (teleportingPlayers.containsKey(player.getUniqueId())) {
-                    // Player is teleporting therefore, is accepting a tpahere
+                    // Player is teleporting therefore, is accepting a tpa here
                     teleportingPlayers.replace(tpaHereList.get(player.getUniqueId()), 4);
                     Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).sendMessage("Accepted tpahere request");
                 }else {
@@ -242,7 +273,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
             // If player that is being tp'd was tpahere'd charge the player that did /tpahere
             if (tpaHereList.containsKey(player.getUniqueId())) {
                 for (ItemStack item : Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).getInventory()) {
-                    if (item != null && item.getItemMeta().hasCustomName() && item.getItemMeta().getDisplayName().equals(teleportItem)) {
+                    if (item != null && item.getItemMeta().hasCustomName() && Objects.requireNonNull(item.getItemMeta().customName()).children().toString().equals(teleportItem)) {
                         Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).sendMessage(paidItemMessage);
                         item.setAmount(item.getAmount() - 1);
                         Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).updateInventory();
@@ -261,14 +292,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
             }else {
                 // Player issued the command themselves
                 for (ItemStack item : player.getInventory()) {
-                    if (item != null && item.getItemMeta().hasCustomName() && item.getItemMeta().getDisplayName().equals(teleportItem)) {
-//                        player.sendMessage(String.valueOf(item.getItemMeta().customName().children("content")));
-//                        String[] itemMetaList = String.valueOf(item.getItemMeta().customName().children()).split("\"");
-//                        player.sendMessage("§f§lStart:");
-//                        for (String itemString : itemMetaList) {
-//                            player.sendMessage(itemString);
-//                        }
-
+                    if (item != null && item.getItemMeta().hasCustomName() && Objects.requireNonNull(item.getItemMeta().customName()).children().toString().equals(teleportItem)) {
                         player.sendMessage(paidItemMessage);
                         item.setAmount(item.getAmount() - 1);
                         player.updateInventory();
@@ -297,6 +321,10 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
          * as the first argument
          */
         pm.registerEvents(this, this);
+
+        commandArguments.add("help");
+        commandArguments.add("freewarps");
+        commandArguments.add("reload");
 
         tpaHereList.clear();
         teleportingPlayers.clear();

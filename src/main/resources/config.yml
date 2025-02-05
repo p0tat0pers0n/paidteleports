@@ -1,7 +1,11 @@
-payment-item: §dTeleport Crystal
-paid-message: §a§lMinevane §7You have used a §dTeleport Crystal§7.
-dropped-item-message: §a§lMinevane §7Pick up your §dTeleport Crystal§7.
-no-payment-item-message: §a§lMinevane §7You need a §dTeleport Crystal§7 to teleport.
+payment-item: '[TextComponentImpl{content="Teleport Crystal", style=StyleImpl{obfuscated=false,
+  bold=false, strikethrough=false, underlined=false, italic=false, color=NamedTextColor{name="light_purple",
+  value="#ff55ff"}, shadowColor=null, clickEvent=null, hoverEvent=null, insertion=null,
+  font=null}, children=[]}]'
+
+paid-message: §a§lMinevane §cYou have used a §dTeleport Crystal
+dropped-item-message: §a§lMinevane §cPick up your §dTeleport Crystal
+no-payment-item-message: §a§lMinevane §cYou need a §dTeleport Crystal§c to teleport
 
 all-warps-free: false
 free-warps:

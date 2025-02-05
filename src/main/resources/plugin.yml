@@ -13,6 +13,6 @@ permissions:
 commands:
   paidteleports:
     description: "Main command to adjust paid teleport settings"
-    usage: /paidteleports
+    usage: /<command> <ptarg>
     permission: paidteleports.defineFreeWarps
     permission-message: "§4You do not have permission to run this command."
