@@ -20,8 +20,8 @@ import java.lang.String;
 import java.util.*;
 
 public final class PaidTeleports extends JavaPlugin implements Listener {
-    String[] teleportCommands = {"tp", "warp", "ewarp", "warps", "ewarps", "essentials:warp", "essentials:ewarp", "essentials:warps", "essentials:ewarps", "tpa", "tp2p", "tpask", "tpahere", "etpa", "etp2p", "etpask", "etpahere", "essentials:tpa", "essentials:tp2p", "essentials:tpask", "essentials:tpahere", "essentials:etpa", "essentials:etp2p", "essentials:etpask", "essentials:etpahere", "home", "homes", "ehome", "ehomes", "essentials:home", "essentials:homes", "essentials:ehome", "essentials:ehomes"};
-    String[] tpaTeleport = {"tpa", "tp2p", "tpask", "etpa", "etp2p", "etpask", "essentials:tpa", "essentials:tp2p", "essentials:tpask", "essentials:etpa", "essentials:etp2p", "essentials:etpask"};
+    String[] teleportCommands = {"tp", "warp", "ewarp", "warps", "ewarps", "essentials:warp", "essentials:ewarp", "essentials:warps", "essentials:ewarps", "tpa", "tp2p", "tpask", "tpahere", "etpa", "etp2p", "etpask", "etpahere", "essentials:tpa", "essentials:tp2p", "essentials:tpask", "essentials:tpahere", "essentials:etpa", "essentials:etp2p", "essentials:etpask", "essentials:etpahere", "home", "homes", "ehome", "ehomes", "essentials:home", "essentials:homes", "essentials:ehome", "essentials:ehomes", "call", "ecall", "essentials:call", "essentials:ecall"};
+    String[] tpaTeleport = {"tpa", "tp2p", "tpask", "etpa", "etp2p", "etpask", "essentials:tpa", "essentials:tp2p", "essentials:tpask", "essentials:etpa", "essentials:etp2p", "essentials:etpask", "call", "ecall", "essentials:call", "essentials:ecall"};
     String[] tpaHereTeleport = {"tpahere", "essentials:tpahere", "etpahere", "essentials:etpahere"};
     String[] tpacceptCommands = {"tpaccept", "etpaccept", "essentials:tpaccept", "essentials:etpaccept"};
 
