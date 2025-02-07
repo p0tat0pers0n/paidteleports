@@ -25,8 +25,12 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
     String[] tpaHereTeleport = {"tpahere", "essentials:tpahere", "etpahere", "essentials:etpahere"};
     String[] tpacceptCommands = {"tpaccept", "etpaccept", "essentials:tpaccept", "essentials:etpaccept"};
 
+    String[] paidTeleportsArgs0 = {"help", "reload", "setitem", "freewarps"};
+    String[] paidTeleportsArgs1 = {"toggle", "add", "remove"};
+
     HashMap<UUID, UUID> tpaHereList = new HashMap<>();
     HashMap<UUID, UUID> tpaList = new HashMap<>();
+    HashMap<UUID, UUID> inverseTpaList = new HashMap<>();
     HashMap<UUID, Integer> teleportingPlayers = new HashMap<>();
 
     String teleportItem = this.getConfig().getString("payment-item");
@@ -37,7 +41,6 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
     List<String> freeWarps = this.getConfig().getStringList("free-warps");
     List<String> commandArguments = new ArrayList<>();
 
-
     @Override
     public boolean onCommand(@NotNull CommandSender sender, Command cmd, @NotNull String label, String @NotNull [] args) {
         teleportItem = this.getConfig().getString("payment-item");
@@ -45,7 +48,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
             this.getConfig().options().copyDefaults(true);
             if (args[0].equals("help")) {
                 // Display help information
-                sender.sendMessage("/paidteleports freewarps toggle\n§cToggles if all warps are free.§f\n/paidteleports setitem\n§cSets the teleport item.§f\n/paidteleports freewarps add/remove WarpName\n§cAdds or removes a warp from the free-warp list.");
+                sender.sendMessage("/paidteleports freewarps toggle\n§cToggles if all warps are free.§f\n/paidteleports setitem\n§cSets the teleport item.§f\n/paidteleports freewarps add/remove [WarpName]\n§cAdds or removes a warp from the free-warp list.");
             }
             if (args[0].equals("reload")) {
                 // Reloads the config file
@@ -97,7 +100,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                                     sender.sendMessage(args[2] + "§c is already on the list");
                                 }
                             } else {
-                                sender.sendMessage("§cMissing warp name argument /paidteleports freewarps add [Warp Name] <-- This");
+                                sender.sendMessage("§cMissing warp name argument /paidteleports freewarps add [WarpName] <-- This");
                             }
                             return true;
                         case "remove":
@@ -111,8 +114,8 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                                 } else {
                                     sender.sendMessage("§cNo warp by that name");
                                 }
-                            } else {
-                                sender.sendMessage("§cMissing warp name argument /paidteleports freewarps remove [Warp Name] <-- This");
+                            }else {
+                                sender.sendMessage("§cMissing warp name argument /paidteleports freewarps remove [WarpName] <-- This");
                             }
                             return true;
                     }
@@ -120,7 +123,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                     // No args [1] therefore list the warps that are free
                     sender.sendMessage("§cAll warps free:§f " + this.getConfig().getBoolean("all-warps-free"));
                     StringBuilder freeWarpsList = new StringBuilder();
-                    freeWarpsList.append("Free Warps: ");
+                    freeWarpsList.append("§cFree Warps: ");
                     if (!this.getConfig().getStringList("free-warps").isEmpty()) {
                         for (String warps : this.getConfig().getStringList("free-warps")) {
                             freeWarpsList.append(warps);
@@ -149,13 +152,10 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, String[] args) {
         List<String> list = new ArrayList<>();
-        if (args.length == 2) {
-            if (args[0].equalsIgnoreCase("ptarg")) {
-                for (String argument : commandArguments) {
-                    if (!argument.toLowerCase().startsWith(args[1].toLowerCase())) continue;
-                    list.add(argument);
-                }
-            }
+        if (args.length == 1) {
+            list.addAll(Arrays.asList(paidTeleportsArgs0));
+        }else if(args.length == 2 && args[0].equals("freewarps")) {
+            list.addAll(Arrays.asList(paidTeleportsArgs1));
         }
         return list;
     }
@@ -193,12 +193,15 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                         }
                         if (!tpaList.containsKey(playerInArgsUUID)) {
                             tpaList.put(player.getUniqueId(), playerInArgsUUID);
+                            inverseTpaList.put(playerInArgsUUID, player.getUniqueId());
                         }else {
                             tpaList.replace(player.getUniqueId(), playerInArgsUUID);
+                            inverseTpaList.replace(playerInArgsUUID, player.getUniqueId());
                         }
                         return false;
                     }
                 }
+                inverseTpaList.remove(tpaList.get(player.getUniqueId()));
                 tpaList.remove(player.getUniqueId());
                 // Home/Warp processing
                 if (!teleportingPlayers.containsKey(player.getUniqueId())) {
@@ -253,12 +256,10 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                 // If the player issued a tp accept command then check if they are accepting a tpa or tpa here and reduce their time
                 if (teleportingPlayers.containsKey(player.getUniqueId())) {
                     // Player is teleporting therefore, is accepting a tpa here
-                    teleportingPlayers.replace(tpaHereList.get(player.getUniqueId()), 4);
-                    Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).sendMessage("Accepted tpahere request");
+                    teleportingPlayers.replace(player.getUniqueId(), 4);
                 }else {
                     // Player is not teleporting therefore they are accepting a tpa request
-                    teleportingPlayers.replace(tpaList.get(player.getUniqueId()), 4);
-                    player.sendMessage("Accepted tpa request");
+                    teleportingPlayers.replace(inverseTpaList.get(player.getUniqueId()), 4);
                 }
             }
         }
@@ -268,8 +269,9 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
     public void playerTeleport(PlayerTeleportEvent event) {
         Player player = event.getPlayer();
         PlayerTeleportEvent.TeleportCause cause = event.getCause();
+
         // Removes player from teleporting list if they teleport within the time
-        if (String.valueOf(cause).equals("COMMAND") && teleportingPlayers.containsKey(player.getUniqueId())) {
+        if (String.valueOf(cause).equals("COMMAND") && teleportingPlayers.containsKey(player.getUniqueId()) && teleportingPlayers.get(player.getUniqueId()) < 5) {
             // If player that is being tp'd was tpahere'd charge the player that did /tpahere
             if (tpaHereList.containsKey(player.getUniqueId())) {
                 for (ItemStack item : Objects.requireNonNull(Bukkit.getPlayer(tpaHereList.get(player.getUniqueId()))).getInventory()) {
@@ -297,6 +299,8 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                         item.setAmount(item.getAmount() - 1);
                         player.updateInventory();
                         teleportingPlayers.remove(player.getUniqueId());
+                        inverseTpaList.remove(tpaList.get(player.getUniqueId()));
+                        tpaList.remove(player.getUniqueId());
                         break;
                     }
                 }
@@ -304,6 +308,8 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                     // Cancel teleport because they dropped the crystal
                     event.setCancelled(true);
                     teleportingPlayers.remove(player.getUniqueId());
+                    inverseTpaList.remove(tpaList.get(player.getUniqueId()));
+                    tpaList.remove(player.getUniqueId());
                     player.sendMessage(droppedItemMessage);
                 }
             }
@@ -327,6 +333,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
         commandArguments.add("reload");
 
         tpaHereList.clear();
+        tpaList.clear();
         teleportingPlayers.clear();
 
         new BukkitRunnable() {
@@ -337,6 +344,8 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                     if (teleportingPlayers.get(playerUUID) < 0) {
                         teleportingPlayers.remove(playerUUID);
                         tpaHereList.remove(playerUUID);
+                        inverseTpaList.remove(tpaList.get(playerUUID));
+                        tpaList.remove(playerUUID);
                     }
                 }
             }
@@ -348,6 +357,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
         teleportingPlayers.remove(event.getPlayer().getUniqueId());
         tpaHereList.remove(event.getPlayer().getUniqueId());
         tpaList.remove(event.getPlayer().getUniqueId());
+        inverseTpaList.remove(tpaList.get(event.getPlayer().getUniqueId()));
     }
 
     @Override

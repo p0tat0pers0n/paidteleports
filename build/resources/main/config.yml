@@ -1,4 +1,7 @@
-payment-item: §dTeleport Crystal
+payment-item: '[TextComponentImpl{content="Teleport Crystal", style=StyleImpl{obfuscated=false,
+  bold=false, strikethrough=false, underlined=false, italic=false, color=NamedTextColor{name="light_purple",
+  value="#ff55ff"}, shadowColor=null, clickEvent=null, hoverEvent=null, insertion=null,
+  font=null}, children=[]}]'
 
 paid-message: §a§lMinevane §cYou have used a §dTeleport Crystal
 dropped-item-message: §a§lMinevane §cPick up your §dTeleport Crystal
