@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'SPUD.Industries'
-version = '6.0'
+version = '8.0'
 
 repositories {
     mavenCentral()

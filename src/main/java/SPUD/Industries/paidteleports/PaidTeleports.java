@@ -39,7 +39,21 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
     String droppedItemMessage = this.getConfig().getString("dropped-item-message");
     String noPaymentItemMessage = this.getConfig().getString("no-payment-item-message");
     List<String> freeWarps = this.getConfig().getStringList("free-warps");
+
     List<String> commandArguments = new ArrayList<>();
+
+    public boolean reloadConfigFile() {
+        try {
+            teleportItem = this.getConfig().getString("payment-item");
+            paidItemMessage = this.getConfig().getString("paid-message");
+            droppedItemMessage = this.getConfig().getString("dropped-item-message");
+            noPaymentItemMessage = this.getConfig().getString("no-payment-item-message");
+            freeWarps = this.getConfig().getStringList("free-warps");
+            return true;
+        }catch(Exception e) {
+            return false;
+        }
+    }
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, Command cmd, @NotNull String label, String @NotNull [] args) {
@@ -53,7 +67,11 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
             if (args[0].equals("reload")) {
                 // Reloads the config file
                 this.reloadConfig();
-                sender.sendMessage("§cReloaded!");
+                if (reloadConfigFile()) {
+                    sender.sendMessage("§cReloaded Successfully");
+                }else {
+                    sender.sendMessage("§cAn error has occured getting new configs");
+                }
                 return true;
             }
 
@@ -64,6 +82,9 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                     this.getConfig().set("payment-item", heldItem);
                     this.saveConfig();
                     sender.sendMessage("§cItem set successfully");
+                    if (!reloadConfigFile()) {
+                        sender.sendMessage("§cError getting updated config values. Restarting the server should fix this");
+                    }
                 }catch(NullPointerException e) {
                     sender.sendMessage("§c§lError occurred when setting item. Are you sure you're holding the right item?");
                 }
