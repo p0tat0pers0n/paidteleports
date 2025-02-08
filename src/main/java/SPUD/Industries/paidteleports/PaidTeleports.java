@@ -248,7 +248,9 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
             if (command.equals(teleportCommand)) {
                 // Player issued actual teleport command and has perms to teleport
                 if (command.equals("tp")) {
-                    teleportingPlayers.remove(Objects.requireNonNull(Bukkit.getPlayer(commandSplit[3])).getUniqueId());
+                    try {
+                        teleportingPlayers.remove(Objects.requireNonNull(Bukkit.getPlayer(commandSplit[3])).getUniqueId());
+                    }catch (Exception ignored) {}
                     break;
                 }
                 if (command.equals("warp") && freeWarps.contains(commandSplit[2])) {
