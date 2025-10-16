@@ -1,5 +1,5 @@
 name: paidteleports
-version: '3.0-SNAPSHOT'
+version: '9'
 main: SPUD.Industries.paidteleports.PaidTeleports
 api-version: '1.21'
 description: A plugin that allows players to define an item to use as payment for Essentials tpa, home, and warp commands
@@ -13,6 +13,6 @@ permissions:
 commands:
   paidteleports:
     description: "Main command to adjust paid teleport settings"
-    usage: /paidteleports
+    usage: /<command> <ptarg>
     permission: paidteleports.defineFreeWarps
     permission-message: "§4You do not have permission to run this command."
