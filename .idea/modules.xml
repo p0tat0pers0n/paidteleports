@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ItemChargeTeleport.main.iml" filepath="$PROJECT_DIR$/.idea/modules/ItemChargeTeleport.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/PaidTeleports.main.iml" filepath="$PROJECT_DIR$/.idea/modules/PaidTeleports.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SPUD.Industries.PaidTeleports.main.iml" filepath="$PROJECT_DIR$/.idea/modules/SPUD.Industries.PaidTeleports.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/untitled.main.iml" filepath="$PROJECT_DIR$/.idea/modules/untitled.main.iml" />
     </modules>
   </component>
