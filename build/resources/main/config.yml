@@ -7,6 +7,9 @@ paid-message: §a§lMinevane §cYou have used a §dTeleport Crystal
 dropped-item-message: §a§lMinevane §cPick up your §dTeleport Crystal
 no-payment-item-message: §a§lMinevane §cYou need a §dTeleport Crystal§c to teleport
 
+#Whether those in creative do not have to pay to teleport to other players' homes
+staff-teleport-players-homes-free: true
+
 all-warps-free: false
 free-warps:
 - admin

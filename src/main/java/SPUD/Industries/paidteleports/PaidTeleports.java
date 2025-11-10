@@ -1,6 +1,7 @@
 package SPUD.Industries.paidteleports;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -34,6 +35,8 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
     HashMap<UUID, Integer> teleportingPlayers = new HashMap<>();
 
     String teleportItem = this.getConfig().getString("payment-item");
+    String configFreeStaffTp = this.getConfig().getString("staff-teleport-players-homes-free");
+
 
     String paidItemMessage = this.getConfig().getString("paid-message");
     String droppedItemMessage = this.getConfig().getString("dropped-item-message");
@@ -49,6 +52,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
             droppedItemMessage = this.getConfig().getString("dropped-item-message");
             noPaymentItemMessage = this.getConfig().getString("no-payment-item-message");
             freeWarps = this.getConfig().getStringList("free-warps");
+            configFreeStaffTp = this.getConfig().getString("staff-teleport-players-homes-free");
             return true;
         }catch(Exception e) {
             return false;
@@ -241,15 +245,18 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
         Player player = event.getPlayer();
         String rawCommand = event.getMessage();
         String[] commandSplit = rawCommand.split("[/\\s]");
+        if (commandSplit.length == 0) {
+            return;
+        }
         String command = commandSplit[1];
-        freeWarps = this.getConfig().getStringList("free-warps");
-
         for (String teleportCommand : teleportCommands) {
             if (command.equals(teleportCommand)) {
                 // Player issued actual teleport command and has perms to teleport
                 if (command.equals("tp")) {
+                    // Operator issued /tp command so remove them from need to pay list
                     try {
                         teleportingPlayers.remove(Objects.requireNonNull(Bukkit.getPlayer(commandSplit[3])).getUniqueId());
+                        teleportingPlayers.remove(event.getPlayer().getUniqueId());
                     }catch (Exception ignored) {}
                     break;
                 }
@@ -261,11 +268,20 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                     // If the all warps free config is enabled then skip payment processing
                     break;
                 }
+
+                if (configFreeStaffTp.equals("true") && (player.getGameMode().equals(GameMode.CREATIVE) || player.getGameMode().equals(GameMode.SPECTATOR))) {
+                    // If player in creative or spectator AND config allows free staff tp then check if player is using /home: command
+                    if (command.equals("home") && commandSplit.length >= 3 && commandSplit[2].contains(":")) {
+                        // If player issues the home command and has a : in it, do not send to payment checker
+                        break;
+                    }
+                }
+
                 if (commandSplit.length < 3) {
                     rawCommand = rawCommand + " NA";
                     commandSplit = rawCommand.split("[/\\s]");
                 }
-                if (paymentChecker(player, commandSplit[1], commandSplit[2])) {
+                if (paymentChecker(player, command, commandSplit[2])) {
                     player.sendMessage(noPaymentItemMessage);
                     teleportingPlayers.remove(player.getUniqueId());
                     event.setCancelled(true);
