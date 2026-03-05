@@ -185,13 +185,19 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
         return list;
     }
 
-    boolean paymentChecker(Player player, String command, String playerInArgs) {
+    String paymentChecker(Player player, String command, String playerInArgs) {
         for (ItemStack item : player.getInventory()) {
             if (item != null && item.getItemMeta().hasCustomName() && Objects.requireNonNull(item.getItemMeta().customName()).children().toString().equals(teleportItem)) {
                 for (String commands : tpaHereTeleport) {
                     // TpaHere processing
                     if (commands.equals(command)) {
-                        UUID playerToTpaHereUUID = Objects.requireNonNull(Bukkit.getPlayer(playerInArgs)).getUniqueId();
+                        // Tries to get the player in the command arguments, if not, cancels teleport
+                        UUID playerToTpaHereUUID;
+                        try {
+                            playerToTpaHereUUID = Objects.requireNonNull(Bukkit.getPlayer(playerInArgs)).getUniqueId();
+                        }catch (NullPointerException e) {
+                            return "args";
+                        }
                         if (!teleportingPlayers.containsKey(playerToTpaHereUUID)) {
                             teleportingPlayers.put(playerToTpaHereUUID, 124);
                         }else {
@@ -202,14 +208,20 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                         }else {
                             tpaHereList.replace(playerToTpaHereUUID, player.getUniqueId());
                         }
-                        return false;
+                        return "success";
                     }
                 }
                 tpaHereList.remove(player.getUniqueId());
                 for (String commands : tpaTeleport) {
                     // Tpa command processing
                     if (command.equals(commands)) {
-                        UUID playerInArgsUUID = Objects.requireNonNull(Bukkit.getPlayer(playerInArgs)).getUniqueId();
+                        // Tries to get the player in the command arguments, if not, cancels teleport
+                        UUID playerInArgsUUID;
+                        try {
+                            playerInArgsUUID = Objects.requireNonNull(Bukkit.getPlayer(playerInArgs)).getUniqueId();
+                        }catch (NullPointerException e) {
+                            return "args";
+                        }
 
                         if (!teleportingPlayers.containsKey(player.getUniqueId())) {
                             teleportingPlayers.put(player.getUniqueId(), 124);
@@ -223,7 +235,7 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                             tpaList.replace(player.getUniqueId(), playerInArgsUUID);
                             inverseTpaList.replace(playerInArgsUUID, player.getUniqueId());
                         }
-                        return false;
+                        return "success";
                     }
                 }
                 inverseTpaList.remove(tpaList.get(player.getUniqueId()));
@@ -234,10 +246,11 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                 }else {
                     teleportingPlayers.replace(player.getUniqueId(), 4);
                 }
-                return false;
+                return "success";
             }
         }
-        return true;
+        // Teleport crystal not found
+        return "notp";
     }
 
     @EventHandler
@@ -246,6 +259,9 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
         String rawCommand = event.getMessage();
         String[] commandSplit = rawCommand.split("[/\\s]");
         if (commandSplit.length == 0) {
+            return;
+        }else if (commandSplit.length > 4) {
+            player.sendMessage("§cAre you sure that you entered the command correctly?");
             return;
         }
         String command = commandSplit[1];
@@ -281,10 +297,19 @@ public final class PaidTeleports extends JavaPlugin implements Listener {
                     rawCommand = rawCommand + " NA";
                     commandSplit = rawCommand.split("[/\\s]");
                 }
-                if (paymentChecker(player, command, commandSplit[2])) {
-                    player.sendMessage(noPaymentItemMessage);
+
+                String result = paymentChecker(player, command, commandSplit[2]);
+                if (!result.equals("success")) {
                     teleportingPlayers.remove(player.getUniqueId());
                     event.setCancelled(true);
+                    switch (result) {
+                        case "args":
+                            player.sendMessage("§cAre you sure that you entered the command correctly?");
+                            break;
+                        case "notp":
+                            player.sendMessage(noPaymentItemMessage);
+                            break;
+                    }
                 }
                 break;
             }
